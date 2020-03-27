@@ -1,0 +1,81 @@
+This repository contains the code related to the following paper:
+
+C.F. Dantas, J.E. Cohen, and R. Gribonval. "Learning Tensor-structured Dictionaries with Application to Hyperspectral Image Denoising." 27th European Signal Processing Conference (EUSIPCO). IEEE, 2019. (Available at: https://hal.inria.fr/hal-02126782v2)
+
+And also the paper below (but for this particular paper, a cleaner version of the code is provided in the repository github.com/cassiofragadantas/Hyperspectral_Image_Denoising_DL):
+
+Dantas C. F., Cohen J.E. and Gribonval R. 'Hyperspectral Image Denoising using Dictionary Learning'. WHISPERS 2019, Amsterdam, Netherlands. (Available at: https://hal.inria.fr/hal-02175630v1)
+
+This is a diffusion-purpose-only snapshot of another private repository where these codes are actually developed (gitlab.inria.fr/jecohen/ho-sukro-icassp2019), revision of 27/03/2020. As such, this repository is not meant to be updated/maintained.
+
+=========================
+File list and description
+=========================
+
+src/
+====
+
+    Evaluating time matrix-vector products (tensor-structured vs. dense matrix)
+    - RC.m : MATLAB script
+    - RC.py : Python script comparing tensorly and torch tensor operations compared to numpy dot product.
+
+src/new_dictionary learning_algo/
+=================================
+
+High-level scripts
+------------------
+
+    - SimpleTest.m: sanity-check tests for the created functions: ALS algorithms, mode-product RC tests and sparse-coding functions.
+
+    - DL_image_denoise_3D: Interative script to be called for an image denoising experiment (simulation parameters are asked to the user).
+    
+    Automatic experiment setup (run_all + DL_image_denoise_3D_input):
+    
+    - DL_image_denoise_3D_input: Same as DL_image_denoise_3D but receiving paramaters as an input.To be used coupled with run_all.m script.
+    - DL_HSI_denoise_input: Similar to DL_image_denoise_3D_input but for Hyperspectral image denoising experiments. It has two variants: without (EUSIPCO paper) and with a low-rank pre-processing (Whispers paper).
+        
+    - run_all: To be parametrized and called by the user. It calls DL_image_denoise_3D_input for a chosen set of parameters.
+
+Alternating optimization Dict. Learning algorithms
+--------------------------------------------------
+
+    - HO-SuKro_DL_ALS : Alternating 1) Dictionary update 2) Sparse coding. All input data are given as fields in 'params' struct.
+    
+    Dictionary update:
+    
+    - DictUpdateALS2 : Alternating Least-Squares for updating the dictionary kronecker terms .
+    - DictUpdateALS3 : Variation of DictUpdateALS2.
+    
+    Sparse coding:
+
+Tensor mode-products
+--------------------
+For the mode-product we tried several options (besides the default tmprod from tensorlab). Trying to counter/atenuate two drawbacks in tmprod:
+1) cannot handle sparse tensors (actually MATLAB doesn't allow for sparse tensors).
+2) slowness wrt to the theoretical complexity of the mode-product due to the permute operations.
+
+    - test_reshape: script for testing switch directly from the unfold of a given mode to the unfold of another mode, without using the permute function (more costly than reshape). Problem: cannot go faster thant
+
+    - tmprod_sparse : variation of tmprod where the unfolded version of data tensor is transformed into sparse just before multiplying (considering that the tensor itself cannot be sparse).
+    
+    - modeprod3: homemade version of tmprod, removing as much logical overhead as possible in order to obtain better performance.
+    
+    - modeprod3_sparse: variation of modeprod3 which takes as an input the permutation indexes (pre-calculated) from one unfolding directly to another.
+
+Sparse-coding
+-------------
+    OMP:
+    
+    - SolveOMP_tensor: based on SolveOMP function from SparseLab toolbox. It replaces the correlation calculation (A'\*res) by a tensor mode-product.
+    - OMP_tensor: adaptation of naive OMP (i.e. without Cholesky update for linear system). It replaces the correlation calculation (A'\*res) by a tensor mode-product.
+
+Misc
+----
+    - unfold: tensor mode unfolding.
+
+ 
+BLAS-level/
+===========
+
+Some lower-level implementations of tersor operations. This one of the alternatives to try and tighten the gap to theoretical complexity predictions.
+
